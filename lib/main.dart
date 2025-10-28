@@ -138,12 +138,13 @@ class ChatScreen extends StatefulWidget {
   _ChatScreenState createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   final TextEditingController _controller = TextEditingController();
   final List<Map<String, dynamic>> _messages = [];
   final String _apiUrl = 'SEU_WORKER_CLOUDFLARE_URL';
   final String _encryptionKey = 'chave_secreta_32_caracteres!!';
   Timer? _timer;
+  final Map<int, AnimationController> _animationControllers = {};
 
   @override
   void initState() {
@@ -156,7 +157,18 @@ class _ChatScreenState extends State<ChatScreen> {
   void dispose() {
     _timer?.cancel();
     _controller.dispose();
+    _animationControllers.values.forEach((controller) => controller.dispose());
     super.dispose();
+  }
+
+  AnimationController _getAnimationController(int index) {
+    if (!_animationControllers.containsKey(index)) {
+      _animationControllers[index] = AnimationController(
+        duration: Duration(milliseconds: 300),
+        vsync: this,
+      )..forward();
+    }
+    return _animationControllers[index]!;
   }
 
   String _encrypt(String text) {
@@ -233,101 +245,284 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF1a237e), Color(0xFF4a148c)],
+            ),
+          ),
+        ),
         title: Row(
           children: [
-            Icon(Icons.lock, size: 20),
-            SizedBox(width: 8),
-            Text('SecureChat'),
+            Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.2),
+              ),
+              child: Icon(Icons.lock, size: 18),
+            ),
+            SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('SecureChat', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text('Criptografado', style: TextStyle(fontSize: 11, color: Colors.white70)),
+              ],
+            ),
           ],
         ),
         elevation: 0,
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: _messages.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.chat_bubble_outline, size: 64, color: Colors.grey),
-                        SizedBox(height: 16),
-                        Text('Nenhuma mensagem ainda', style: TextStyle(color: Colors.grey)),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    reverse: true,
-                    padding: EdgeInsets.all(16),
-                    itemCount: _messages.length,
-                    itemBuilder: (context, index) {
-                      final msg = _messages[index];
-                      return Align(
-                        alignment: msg['isMine'] ? Alignment.centerRight : Alignment.centerLeft,
-                        child: Container(
-                          margin: EdgeInsets.only(bottom: 8),
-                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: msg['isMine'] ? Colors.deepPurple : Colors.grey[800],
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(msg['text'], style: TextStyle(fontSize: 16)),
-                              SizedBox(height: 4),
-                              Text(
-                                '${msg['time'].hour}:${msg['time'].minute.toString().padLeft(2, '0')}',
-                                style: TextStyle(fontSize: 10, color: Colors.white60),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-          ),
-          Container(
-            padding: EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.grey[900],
-              boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: InputDecoration(
-                      hintText: 'Digite sua mensagem...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(25),
-                        borderSide: BorderSide.none,
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey[800],
-                      contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    ),
-                    onSubmitted: (_) => _sendMessage(),
-                  ),
-                ),
-                SizedBox(width: 8),
-                Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [Colors.deepPurple, Colors.purple],
-                    ),
-                  ),
-                  child: IconButton(
-                    icon: Icon(Icons.send, color: Colors.white),
-                    onPressed: _sendMessage,
-                  ),
-                ),
-              ],
-            ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.more_vert),
+            onPressed: () {},
           ),
         ],
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF0a0e27),
+              Color(0xFF1a1a2e),
+            ],
+          ),
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              child: _messages.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.all(30),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.deepPurple.withOpacity(0.1),
+                            ),
+                            child: Icon(Icons.chat_bubble_outline, size: 64, color: Colors.deepPurple.withOpacity(0.5)),
+                          ),
+                          SizedBox(height: 24),
+                          Text(
+                            'Nenhuma mensagem ainda',
+                            style: TextStyle(color: Colors.grey, fontSize: 16),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Envie uma mensagem para começar',
+                            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      reverse: true,
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                      itemCount: _messages.length,
+                      itemBuilder: (context, index) {
+                        final msg = _messages[index];
+                        final controller = _getAnimationController(index);
+                        
+                        return SlideTransition(
+                          position: Tween<Offset>(
+                            begin: Offset(msg['isMine'] ? 1 : -1, 0),
+                            end: Offset.zero,
+                          ).animate(CurvedAnimation(
+                            parent: controller,
+                            curve: Curves.easeOutCubic,
+                          )),
+                          child: FadeTransition(
+                            opacity: controller,
+                            child: Padding(
+                              padding: EdgeInsets.only(bottom: 12),
+                              child: Row(
+                                mainAxisAlignment: msg['isMine'] 
+                                    ? MainAxisAlignment.end 
+                                    : MainAxisAlignment.start,
+                                children: [
+                                  if (!msg['isMine']) ...[
+                                    Container(
+                                      width: 36,
+                                      height: 36,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        gradient: LinearGradient(
+                                          colors: [Colors.orange, Colors.deepOrange],
+                                        ),
+                                      ),
+                                      child: Icon(Icons.person, size: 20, color: Colors.white),
+                                    ),
+                                    SizedBox(width: 8),
+                                  ],
+                                  Flexible(
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                      decoration: BoxDecoration(
+                                        gradient: msg['isMine']
+                                            ? LinearGradient(
+                                                colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                                              )
+                                            : null,
+                                        color: msg['isMine'] ? null : Color(0xFF2d2d44),
+                                        borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(20),
+                                          topRight: Radius.circular(20),
+                                          bottomLeft: Radius.circular(msg['isMine'] ? 20 : 4),
+                                          bottomRight: Radius.circular(msg['isMine'] ? 4 : 20),
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: (msg['isMine'] ? Colors.purple : Colors.black)
+                                                .withOpacity(0.3),
+                                            blurRadius: 8,
+                                            offset: Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            msg['text'],
+                                            style: TextStyle(
+                                              fontSize: 15,
+                                              color: Colors.white,
+                                              height: 1.4,
+                                            ),
+                                          ),
+                                          SizedBox(height: 6),
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.lock,
+                                                size: 10,
+                                                color: Colors.white60,
+                                              ),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                '${msg['time'].hour}:${msg['time'].minute.toString().padLeft(2, '0')}',
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  color: Colors.white60,
+                                                ),
+                                              ),
+                                              if (msg['isMine']) ...[
+                                                SizedBox(width: 4),
+                                                Icon(
+                                                  Icons.done_all,
+                                                  size: 12,
+                                                  color: Colors.lightBlue,
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  if (msg['isMine']) ...[
+                                    SizedBox(width: 8),
+                                    Container(
+                                      width: 36,
+                                      height: 36,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        gradient: LinearGradient(
+                                          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                                        ),
+                                      ),
+                                      child: Icon(Icons.person, size: 20, color: Colors.white),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              decoration: BoxDecoration(
+                color: Color(0xFF1a1a2e),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black38,
+                    blurRadius: 10,
+                    offset: Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                child: Row(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.deepPurple.withOpacity(0.2),
+                      ),
+                      child: IconButton(
+                        icon: Icon(Icons.add, color: Colors.deepPurple),
+                        onPressed: () {},
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Color(0xFF2d2d44),
+                          borderRadius: BorderRadius.circular(25),
+                          border: Border.all(
+                            color: Colors.deepPurple.withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: TextField(
+                          controller: _controller,
+                          style: TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            hintText: 'Digite sua mensagem...',
+                            hintStyle: TextStyle(color: Colors.grey[600]),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          ),
+                          onSubmitted: (_) => _sendMessage(),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.deepPurple.withOpacity(0.4),
+                            blurRadius: 12,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
+                        icon: Icon(Icons.send_rounded, color: Colors.white),
+                        onPressed: _sendMessage,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

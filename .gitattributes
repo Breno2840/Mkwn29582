@@ -1,0 +1,16 @@
+# 1. Ignora os arquivos de configuração/build da web
+# Isso é o que provavelmente está fazendo o HTML ser a linguagem principal.
+/web/** linguist-language=
+/web/** linguist-vendored
+
+# 2. Ignora os arquivos de configuração de outras plataformas que você não quer contar
+/ios/** linguist-language=
+/macos/** linguist-language=
+/linux/** linguist-language=
+/windows/** linguist-language=
+
+# 3. Marca os arquivos gerados (como os de 'build_runner') para que eles
+# não entrem na contagem de linguagem, mantendo o foco no seu código Dart.
+# Se você não usa build_runner, pode ignorar esta seção.
+# *.g.dart linguist-generated=true
+# *.freezed.dart linguist-generated=true

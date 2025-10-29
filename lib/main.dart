@@ -6,6 +6,23 @@ import 'dart:async';
 
 void main() => runApp(ChatApp());
 
+// Gera ícone aleatório para o usuário
+final List<IconData> randomIcons = [
+  Icons.face, Icons.sentiment_satisfied, Icons.emoji_emotions,
+  Icons.mood, Icons.tag_faces, Icons.person, Icons.account_circle,
+];
+
+final List<Color> randomColors = [
+  Colors.blue, Colors.pink, Colors.orange, Colors.purple, 
+  Colors.teal, Colors.red, Colors.green, Colors.indigo,
+];
+
+int _getUserIconIndex() => DateTime.now().millisecondsSinceEpoch % randomIcons.length;
+int _getUserColorIndex() => DateTime.now().microsecondsSinceEpoch % randomColors.length;
+
+IconData getUserIcon() => randomIcons[_getUserIconIndex()];
+Color getUserColor() => randomColors[_getUserColorIndex()];
+
 class ChatApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -228,36 +245,13 @@ class _ConversationsScreenState extends State<ConversationsScreen> with SingleTi
                 padding: EdgeInsets.all(16),
                 child: Row(
                   children: [
-                    Container(
-                      padding: EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                        ),
+                    Text(
+                      'SecureChat',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
-                      child: Icon(Icons.lock, size: 24),
-                    ),
-                    SizedBox(width: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'SecureChat',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          '${contacts.length} conversas',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white60,
-                          ),
-                        ),
-                      ],
                     ),
                     Spacer(),
                     IconButton(
@@ -474,21 +468,204 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   final String _apiUrl = 'SEU_WORKER_CLOUDFLARE_URL';
   final String _encryptionKey = 'chave_secreta_32_caracteres!!';
   Timer? _timer;
+  Timer? _autoDeleteTimer;
+  int _autoDeleteMinutes = 0; // 0 = desativado
   final Map<int, AnimationController> _animationControllers = {};
+  Color _myBubbleColor = Color(0xFF667eea);
+  Color _otherBubbleColor = Color(0xFF2d2d44);
 
   @override
   void initState() {
     super.initState();
     _loadMessages();
     _timer = Timer.periodic(Duration(seconds: 3), (timer) => _loadMessages());
+    _startAutoDeleteTimer();
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _autoDeleteTimer?.cancel();
     _controller.dispose();
     _animationControllers.values.forEach((controller) => controller.dispose());
     super.dispose();
+  }
+
+  void _startAutoDeleteTimer() {
+    _autoDeleteTimer?.cancel();
+    if (_autoDeleteMinutes > 0) {
+      _autoDeleteTimer = Timer.periodic(Duration(minutes: 1), (timer) {
+        setState(() {
+          final now = DateTime.now();
+          _messages.removeWhere((msg) {
+            final diff = now.difference(msg['time']).inMinutes;
+            return diff >= _autoDeleteMinutes;
+          });
+        });
+      });
+    }
+  }
+
+  void _showOptionsMenu() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Color(0xFF1a1a2e),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(Icons.timer, color: Colors.blue),
+              title: Text('Temporizador Auto-Exclusão'),
+              subtitle: Text(_autoDeleteMinutes == 0 
+                  ? 'Desativado' 
+                  : 'Ativo: $_autoDeleteMinutes min'),
+              onTap: () {
+                Navigator.pop(context);
+                _showAutoDeleteDialog();
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.delete_sweep, color: Colors.red),
+              title: Text('Limpar Conversa'),
+              onTap: () {
+                Navigator.pop(context);
+                setState(() => _messages.clear());
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Conversa limpa!')),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.palette, color: Colors.purple),
+              title: Text('Personalizar Tema'),
+              onTap: () {
+                Navigator.pop(context);
+                _showThemeDialog();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAutoDeleteDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Color(0xFF1a1a2e),
+        title: Text('Temporizador de Auto-Exclusão'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: Text('Desativado'),
+              leading: Radio<int>(
+                value: 0,
+                groupValue: _autoDeleteMinutes,
+                onChanged: (val) {
+                  setState(() => _autoDeleteMinutes = val!);
+                  _startAutoDeleteTimer();
+                  Navigator.pop(context);
+                },
+              ),
+            ),
+            ListTile(
+              title: Text('1 minuto'),
+              leading: Radio<int>(
+                value: 1,
+                groupValue: _autoDeleteMinutes,
+                onChanged: (val) {
+                  setState(() => _autoDeleteMinutes = val!);
+                  _startAutoDeleteTimer();
+                  Navigator.pop(context);
+                },
+              ),
+            ),
+            ListTile(
+              title: Text('5 minutos'),
+              leading: Radio<int>(
+                value: 5,
+                groupValue: _autoDeleteMinutes,
+                onChanged: (val) {
+                  setState(() => _autoDeleteMinutes = val!);
+                  _startAutoDeleteTimer();
+                  Navigator.pop(context);
+                },
+              ),
+            ),
+            ListTile(
+              title: Text('30 minutos'),
+              leading: Radio<int>(
+                value: 30,
+                groupValue: _autoDeleteMinutes,
+                onChanged: (val) {
+                  setState(() => _autoDeleteMinutes = val!);
+                  _startAutoDeleteTimer();
+                  Navigator.pop(context);
+                },
+              ),
+            ),
+            ListTile(
+              title: Text('1 hora'),
+              leading: Radio<int>(
+                value: 60,
+                groupValue: _autoDeleteMinutes,
+                onChanged: (val) {
+                  setState(() => _autoDeleteMinutes = val!);
+                  _startAutoDeleteTimer();
+                  Navigator.pop(context);
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showThemeDialog() {
+    final themes = [
+      {'name': 'Roxo (Padrão)', 'my': Color(0xFF667eea), 'other': Color(0xFF2d2d44)},
+      {'name': 'Azul', 'my': Color(0xFF1e88e5), 'other': Color(0xFF263238)},
+      {'name': 'Verde', 'my': Color(0xFF43a047), 'other': Color(0xFF2d3e2d)},
+      {'name': 'Rosa', 'my': Color(0xFFec407a), 'other': Color(0xFF3e2d3a)},
+      {'name': 'Laranja', 'my': Color(0xFFff7043), 'other': Color(0xFF3e2f2d)},
+    ];
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Color(0xFF1a1a2e),
+        title: Text('Escolher Tema das Bolhas'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: themes.map((theme) => ListTile(
+            title: Text(theme['name'] as String),
+            leading: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: theme['my'] as Color,
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            onTap: () {
+              setState(() {
+                _myBubbleColor = theme['my'] as Color;
+                _otherBubbleColor = theme['other'] as Color;
+              });
+              Navigator.pop(context);
+            },
+          )).toList(),
+        ),
+      ),
+    );
   }
 
   AnimationController _getAnimationController(int index) {
@@ -627,7 +804,10 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         actions: [
           IconButton(icon: Icon(Icons.videocam), onPressed: () {}),
           IconButton(icon: Icon(Icons.call), onPressed: () {}),
-          IconButton(icon: Icon(Icons.more_vert), onPressed: () {}),
+          IconButton(
+            icon: Icon(Icons.more_vert), 
+            onPressed: _showOptionsMenu,
+          ),
         ],
       ),
       body: Container(
@@ -686,10 +866,10 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                                 decoration: BoxDecoration(
                                   gradient: msg['isMine']
                                       ? LinearGradient(
-                                          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                                          colors: [_myBubbleColor, _myBubbleColor.withOpacity(0.8)],
                                         )
                                       : null,
-                                  color: msg['isMine'] ? null : Color(0xFF2d2d44),
+                                  color: msg['isMine'] ? null : _otherBubbleColor,
                                   borderRadius: BorderRadius.only(
                                     topLeft: Radius.circular(20),
                                     topRight: Radius.circular(20),

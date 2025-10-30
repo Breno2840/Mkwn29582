@@ -166,7 +166,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> with SingleTi
       'lastMessage': 'Oi! Tudo bem?',
       'time': '19:45',
       'unread': 2,
-      'avatar': Icons.person,
+      'avatar': Icons.face,
       'color': Colors.blue,
       'online': true,
     },
@@ -175,7 +175,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> with SingleTi
       'lastMessage': 'Vamos nos encontrar amanhã?',
       'time': '18:30',
       'unread': 0,
-      'avatar': Icons.person,
+      'avatar': Icons.sentiment_satisfied,
       'color': Colors.pink,
       'online': true,
     },
@@ -184,7 +184,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> with SingleTi
       'lastMessage': 'Obrigado pela ajuda!',
       'time': '16:22',
       'unread': 0,
-      'avatar': Icons.person,
+      'avatar': Icons.emoji_emotions,
       'color': Colors.orange,
       'online': false,
     },
@@ -193,7 +193,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> with SingleTi
       'lastMessage': 'Você viu o vídeo que te mandei?',
       'time': '15:10',
       'unread': 5,
-      'avatar': Icons.person,
+      'avatar': Icons.mood,
       'color': Colors.purple,
       'online': true,
     },
@@ -202,7 +202,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> with SingleTi
       'lastMessage': 'Até logo! 👋',
       'time': 'Ontem',
       'unread': 0,
-      'avatar': Icons.person,
+      'avatar': Icons.tag_faces,
       'color': Colors.teal,
       'online': false,
     },
@@ -296,128 +296,136 @@ class _ConversationsScreenState extends State<ConversationsScreen> with SingleTi
                             ),
                           );
                         },
-                        child: Container(
-                          margin: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          decoration: BoxDecoration(
-                            color: Color(0xFF1a1a2e).withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            children: [
-                              Stack(
-                                children: [
-                                  Container(
-                                    width: 56,
-                                    height: 56,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          contact['color'],
-                                          contact['color'].withOpacity(0.7),
-                                        ],
-                                      ),
-                                    ),
-                                    child: Icon(
-                                      contact['avatar'],
-                                      color: Colors.white,
-                                      size: 28,
-                                    ),
-                                  ),
-                                  if (contact['online'])
-                                    Positioned(
-                                      right: 0,
-                                      bottom: 0,
-                                      child: Container(
-                                        width: 16,
-                                        height: 16,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: Colors.greenAccent,
-                                          border: Border.all(
-                                            color: Color(0xFF0a0e27),
-                                            width: 3,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                              SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Text(
-                                          contact['name'],
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                        SizedBox(width: 6),
-                                        Icon(
-                                          Icons.lock,
-                                          size: 12,
-                                          color: Colors.green.withOpacity(0.8),
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(height: 5),
-                                    Text(
-                                      contact['lastMessage'],
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.white54,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ChatScreen(
+                                  contactName: contact['name'],
+                                  contactColor: contact['color'],
                                 ),
                               ),
-                              SizedBox(width: 8),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    contact['time'],
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color: contact['unread'] > 0
-                                          ? Colors.greenAccent
-                                          : Colors.white.withOpacity(0.4),
-                                    ),
-                                  ),
-                                  SizedBox(height: 6),
-                                  if (contact['unread'] > 0)
+                            );
+                          },
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            child: Row(
+                              children: [
+                                Stack(
+                                  children: [
                                     Container(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
+                                      width: 56,
+                                      height: 56,
                                       decoration: BoxDecoration(
-                                        color: Colors.greenAccent,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Text(
-                                        '${contact['unread']}',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black,
+                                        shape: BoxShape.circle,
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            contact['color'],
+                                            contact['color'].withOpacity(0.7),
+                                          ],
                                         ),
                                       ),
+                                      child: Icon(
+                                        contact['avatar'],
+                                        color: Colors.white,
+                                        size: 30,
+                                      ),
                                     ),
-                                ],
-                              ),
-                            ],
+                                    if (contact['online'])
+                                      Positioned(
+                                        right: 0,
+                                        bottom: 0,
+                                        child: Container(
+                                          width: 16,
+                                          height: 16,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Colors.greenAccent,
+                                            border: Border.all(
+                                              color: Color(0xFF0a0e27),
+                                              width: 3,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Text(
+                                            contact['name'],
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          SizedBox(width: 6),
+                                          Icon(
+                                            Icons.lock,
+                                            size: 12,
+                                            color: Colors.green.withOpacity(0.8),
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(height: 5),
+                                      Text(
+                                        contact['lastMessage'],
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.white54,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      contact['time'],
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                        color: contact['unread'] > 0
+                                            ? Colors.greenAccent
+                                            : Colors.white.withOpacity(0.4),
+                                      ),
+                                    ),
+                                    SizedBox(height: 6),
+                                    if (contact['unread'] > 0)
+                                      Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.greenAccent,
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: Text(
+                                          '${contact['unread']}',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),

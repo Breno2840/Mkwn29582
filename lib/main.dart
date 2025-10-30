@@ -34,16 +34,31 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fade;
+
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 2), () {
+    _controller =
+        AnimationController(vsync: this, duration: const Duration(seconds: 2));
+    _fade = Tween<double>(begin: 0, end: 1).animate(_controller);
+    _controller.forward();
+
+    Future.delayed(const Duration(seconds: 3), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        MaterialPageRoute(builder: (_) => const ChatScreen()),
       );
     });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
@@ -56,64 +71,27 @@ class _SplashScreenState extends State<SplashScreen> {
           end: Alignment.bottomRight,
         ),
       ),
-      child: const Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.lock, size: 100, color: Colors.white),
-              SizedBox(height: 20),
-              Text(
-                "Chat Seguro",
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  letterSpacing: 1.5,
-                ),
-              )
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ---------------- HOME ----------------
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF141E30), Color(0xFF243B55)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: AppBar(title: const Text("Início")),
         body: Center(
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blueAccent,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
+          child: FadeTransition(
+            opacity: _fade,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(Icons.lock_outline, size: 100, color: Colors.white),
+                SizedBox(height: 20),
+                Text(
+                  "Chat Seguro",
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 1.5,
+                  ),
+                )
+              ],
             ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ChatScreen()),
-              );
-            },
-            child: const Text("Entrar no Chat", style: TextStyle(fontSize: 18)),
           ),
         ),
       ),
@@ -132,6 +110,28 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final List<_Message> _messages = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFakeMessages();
+  }
+
+  void _loadFakeMessages() {
+    final fake = [
+      "Oi, tudo bem?",
+      "Esse chat é criptografado?",
+      "Sim! Toda mensagem é protegida localmente.",
+      "Legal! E como funciona?",
+      "Usamos SHA256 por enquanto, mas podemos evoluir para AES.",
+    ];
+    for (var text in fake) {
+      _messages.add(_Message(
+        original: text,
+        encrypted: _encryptMessage(text),
+      ));
+    }
+  }
 
   String _encryptMessage(String text) {
     final bytes = utf8.encode(text);
@@ -171,21 +171,26 @@ class _ChatScreenState extends State<ChatScreen> {
                 itemCount: _messages.length,
                 itemBuilder: (context, index) {
                   final msg = _messages[index];
+                  final isUser = index >= 5; // mensagens após as 5 primeiras
                   return Align(
-                    alignment: Alignment.centerRight,
+                    alignment: isUser
+                        ? Alignment.centerRight
+                        : Alignment.centerLeft,
                     child: Container(
                       margin: const EdgeInsets.symmetric(vertical: 6),
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF56CCF2), Color(0xFF2F80ED)],
+                        gradient: LinearGradient(
+                          colors: isUser
+                              ? [Color(0xFF56CCF2), Color(0xFF2F80ED)]
+                              : [Color(0xFF757F9A), Color(0xFFD7DDE8)],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.circular(18),
                       ),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(msg.original,
                               style: const TextStyle(
@@ -202,7 +207,6 @@ class _ChatScreenState extends State<ChatScreen> {
                 },
               ),
             ),
-            // Barra de digitação estilizada
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               decoration: const BoxDecoration(

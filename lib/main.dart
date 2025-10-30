@@ -297,11 +297,11 @@ class _ConversationsScreenState extends State<ConversationsScreen> with SingleTi
                           );
                         },
                         child: Container(
-                          margin: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                          padding: EdgeInsets.all(12),
+                          margin: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                           decoration: BoxDecoration(
-                            color: Color(0xFF1a1a2e).withOpacity(0.5),
-                            borderRadius: BorderRadius.circular(16),
+                            color: Color(0xFF1a1a2e).withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(20),
                           ),
                           child: Row(
                             children: [
@@ -327,24 +327,24 @@ class _ConversationsScreenState extends State<ConversationsScreen> with SingleTi
                                   ),
                                   if (contact['online'])
                                     Positioned(
-                                      right: 2,
-                                      bottom: 2,
+                                      right: 0,
+                                      bottom: 0,
                                       child: Container(
-                                        width: 14,
-                                        height: 14,
+                                        width: 16,
+                                        height: 16,
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
                                           color: Colors.greenAccent,
                                           border: Border.all(
-                                            color: Color(0xFF1a1a2e),
-                                            width: 2,
+                                            color: Color(0xFF0a0e27),
+                                            width: 3,
                                           ),
                                         ),
                                       ),
                                     ),
                                 ],
                               ),
-                              SizedBox(width: 12),
+                              SizedBox(width: 14),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -355,7 +355,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> with SingleTi
                                           contact['name'],
                                           style: TextStyle(
                                             fontSize: 16,
-                                            fontWeight: FontWeight.bold,
+                                            fontWeight: FontWeight.w600,
                                             color: Colors.white,
                                           ),
                                         ),
@@ -363,16 +363,16 @@ class _ConversationsScreenState extends State<ConversationsScreen> with SingleTi
                                         Icon(
                                           Icons.lock,
                                           size: 12,
-                                          color: Colors.green,
+                                          color: Colors.green.withOpacity(0.8),
                                         ),
                                       ],
                                     ),
-                                    SizedBox(height: 4),
+                                    SizedBox(height: 5),
                                     Text(
                                       contact['lastMessage'],
                                       style: TextStyle(
                                         fontSize: 14,
-                                        color: Colors.white60,
+                                        color: Colors.white54,
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -380,19 +380,22 @@ class _ConversationsScreenState extends State<ConversationsScreen> with SingleTi
                                   ],
                                 ),
                               ),
+                              SizedBox(width: 8),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.end,
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
                                     contact['time'],
                                     style: TextStyle(
                                       fontSize: 12,
+                                      fontWeight: FontWeight.w500,
                                       color: contact['unread'] > 0
                                           ? Colors.greenAccent
-                                          : Colors.white60,
+                                          : Colors.white40,
                                     ),
                                   ),
-                                  SizedBox(height: 4),
+                                  SizedBox(height: 6),
                                   if (contact['unread'] > 0)
                                     Container(
                                       padding: EdgeInsets.symmetric(
@@ -401,12 +404,12 @@ class _ConversationsScreenState extends State<ConversationsScreen> with SingleTi
                                       ),
                                       decoration: BoxDecoration(
                                         color: Colors.greenAccent,
-                                        borderRadius: BorderRadius.circular(12),
+                                        borderRadius: BorderRadius.circular(10),
                                       ),
                                       child: Text(
                                         '${contact['unread']}',
                                         style: TextStyle(
-                                          fontSize: 12,
+                                          fontSize: 11,
                                           fontWeight: FontWeight.bold,
                                           color: Colors.black,
                                         ),

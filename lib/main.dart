@@ -392,7 +392,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> with SingleTi
                                       fontWeight: FontWeight.w500,
                                       color: contact['unread'] > 0
                                           ? Colors.greenAccent
-                                          : Colors.white40,
+                                          : Colors.white.withOpacity(0.4),
                                     ),
                                   ),
                                   SizedBox(height: 6),

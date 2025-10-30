@@ -159,6 +159,8 @@ class ConversationsScreen extends StatefulWidget {
 
 class _ConversationsScreenState extends State<ConversationsScreen> with SingleTickerProviderStateMixin {
   late AnimationController _animController;
+  bool _notificationsEnabled = true;
+  bool _darkMode = true;
   
   final List<Map<String, dynamic>> contacts = [
     {
@@ -166,7 +168,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> with SingleTi
       'lastMessage': 'Oi! Tudo bem?',
       'time': '19:45',
       'unread': 2,
-      'avatar': Icons.face,
+      'avatar': Icons.person,
       'color': Colors.blue,
       'online': true,
     },
@@ -175,7 +177,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> with SingleTi
       'lastMessage': 'Vamos nos encontrar amanhã?',
       'time': '18:30',
       'unread': 0,
-      'avatar': Icons.sentiment_satisfied,
+      'avatar': Icons.person,
       'color': Colors.pink,
       'online': true,
     },
@@ -184,7 +186,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> with SingleTi
       'lastMessage': 'Obrigado pela ajuda!',
       'time': '16:22',
       'unread': 0,
-      'avatar': Icons.emoji_emotions,
+      'avatar': Icons.person,
       'color': Colors.orange,
       'online': false,
     },
@@ -193,7 +195,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> with SingleTi
       'lastMessage': 'Você viu o vídeo que te mandei?',
       'time': '15:10',
       'unread': 5,
-      'avatar': Icons.mood,
+      'avatar': Icons.person,
       'color': Colors.purple,
       'online': true,
     },
@@ -202,7 +204,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> with SingleTi
       'lastMessage': 'Até logo! 👋',
       'time': 'Ontem',
       'unread': 0,
-      'avatar': Icons.tag_faces,
+      'avatar': Icons.person,
       'color': Colors.teal,
       'online': false,
     },
@@ -221,6 +223,109 @@ class _ConversationsScreenState extends State<ConversationsScreen> with SingleTi
   void dispose() {
     _animController.dispose();
     super.dispose();
+  }
+
+  void _showSettingsMenu() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Color(0xFF1a1a2e),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Text(
+              'Configurações',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            SizedBox(height: 20),
+            SwitchListTile(
+              secondary: Icon(Icons.notifications, color: Colors.blue),
+              title: Text('Notificações'),
+              subtitle: Text('Receber alertas de novas mensagens'),
+              value: _notificationsEnabled,
+              activeColor: Colors.greenAccent,
+              onChanged: (val) {
+                setState(() => _notificationsEnabled = val);
+              },
+            ),
+            SwitchListTile(
+              secondary: Icon(Icons.dark_mode, color: Colors.purple),
+              title: Text('Modo Escuro'),
+              subtitle: Text('Tema escuro para o aplicativo'),
+              value: _darkMode,
+              activeColor: Colors.greenAccent,
+              onChanged: (val) {
+                setState(() => _darkMode = val);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.info_outline, color: Colors.orange),
+              title: Text('Sobre o App'),
+              subtitle: Text('SecureChat v1.0'),
+              onTap: () {
+                Navigator.pop(context);
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    backgroundColor: Color(0xFF1a1a2e),
+                    title: Text('SecureChat'),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Versão: 1.0.0'),
+                        SizedBox(height: 10),
+                        Text('App de mensagens com criptografia de ponta a ponta.'),
+                        SizedBox(height: 10),
+                        Text(
+                          '🔒 Suas mensagens são criptografadas localmente antes de serem enviadas.',
+                          style: TextStyle(fontSize: 12, color: Colors.white70),
+                        ),
+                      ],
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('OK'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            Divider(color: Colors.white.withOpacity(0.2)),
+            Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                '✨ Mais opções em breve...',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.white.withOpacity(0.5),
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -260,7 +365,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> with SingleTi
                     ),
                     IconButton(
                       icon: Icon(Icons.more_vert, color: Colors.white),
-                      onPressed: () {},
+                      onPressed: _showSettingsMenu,
                     ),
                   ],
                 ),
@@ -296,136 +401,128 @@ class _ConversationsScreenState extends State<ConversationsScreen> with SingleTi
                             ),
                           );
                         },
-                        child: InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ChatScreen(
-                                  contactName: contact['name'],
-                                  contactColor: contact['color'],
-                                ),
-                              ),
-                            );
-                          },
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            child: Row(
-                              children: [
-                                Stack(
-                                  children: [
-                                    Container(
-                                      width: 56,
-                                      height: 56,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        gradient: LinearGradient(
-                                          colors: [
-                                            contact['color'],
-                                            contact['color'].withOpacity(0.7),
-                                          ],
-                                        ),
-                                      ),
-                                      child: Icon(
-                                        contact['avatar'],
-                                        color: Colors.white,
-                                        size: 30,
-                                      ),
-                                    ),
-                                    if (contact['online'])
-                                      Positioned(
-                                        right: 0,
-                                        bottom: 0,
-                                        child: Container(
-                                          width: 16,
-                                          height: 16,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: Colors.greenAccent,
-                                            border: Border.all(
-                                              color: Color(0xFF0a0e27),
-                                              width: 3,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                                SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Text(
-                                            contact['name'],
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w600,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                          SizedBox(width: 6),
-                                          Icon(
-                                            Icons.lock,
-                                            size: 12,
-                                            color: Colors.green.withOpacity(0.8),
-                                          ),
+                        child: Container(
+                          margin: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          decoration: BoxDecoration(
+                            color: Color(0xFF1a1a2e).withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            children: [
+                              Stack(
+                                children: [
+                                  Container(
+                                    width: 56,
+                                    height: 56,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          contact['color'],
+                                          contact['color'].withOpacity(0.7),
                                         ],
                                       ),
-                                      SizedBox(height: 5),
-                                      Text(
-                                        contact['lastMessage'],
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.white54,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                SizedBox(width: 8),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      contact['time'],
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500,
-                                        color: contact['unread'] > 0
-                                            ? Colors.greenAccent
-                                            : Colors.white.withOpacity(0.4),
-                                      ),
                                     ),
-                                    SizedBox(height: 6),
-                                    if (contact['unread'] > 0)
-                                      Container(
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 4,
-                                        ),
+                                    child: Icon(
+                                      contact['avatar'],
+                                      color: Colors.white,
+                                      size: 28,
+                                    ),
+                                  ),
+                                  if (contact['online'])
+                                    Positioned(
+                                      right: 0,
+                                      bottom: 0,
+                                      child: Container(
+                                        width: 16,
+                                        height: 16,
                                         decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
                                           color: Colors.greenAccent,
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                        child: Text(
-                                          '${contact['unread']}',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black,
+                                          border: Border.all(
+                                            color: Color(0xFF0a0e27),
+                                            width: 3,
                                           ),
                                         ),
                                       ),
+                                    ),
+                                ],
+                              ),
+                              SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          contact['name'],
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        SizedBox(width: 6),
+                                        Icon(
+                                          Icons.lock,
+                                          size: 12,
+                                          color: Colors.green.withOpacity(0.8),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: 5),
+                                    Text(
+                                      contact['lastMessage'],
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.white54,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ],
                                 ),
-                              ],
-                            ),
+                              ),
+                              SizedBox(width: 8),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    contact['time'],
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: contact['unread'] > 0
+                                          ? Colors.greenAccent
+                                          : Colors.white.withOpacity(0.4),
+                                    ),
+                                  ),
+                                  SizedBox(height: 6),
+                                  if (contact['unread'] > 0)
+                                    Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.greenAccent,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Text(
+                                        '${contact['unread']}',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -476,7 +573,56 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       'isMine': false,
     },
   ];
-  final String _apiUrl = 'SEU_WORKER_CLOUDFLARE_URL';
+  // ============================================
+  // 🔥 CONFIGURAÇÃO DO CLOUDFLARE WORKERS KV 🔥
+  // ============================================
+  // 1. Crie um Worker no Cloudflare Dashboard (workers.cloudflare.com)
+  // 2. Crie um KV Namespace chamado "CHAT_KV"
+  // 3. Cole o código abaixo no seu Worker:
+  /*
+    export default {
+      async fetch(request, env) {
+        // Configurar CORS para aceitar requisições do app
+        const headers = {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Content-Type': 'application/json',
+        };
+
+        // Tratar OPTIONS (CORS preflight)
+        if (request.method === 'OPTIONS') {
+          return new Response(null, { headers });
+        }
+
+        const url = new URL(request.url);
+        
+        // ENVIAR MENSAGEM (POST)
+        if (request.method === 'POST') {
+          const data = await request.json();
+          const key = `msg_${data.timestamp}`;
+          await env.CHAT_KV.put(key, JSON.stringify(data));
+          return new Response(JSON.stringify({success: true}), { headers });
+        }
+        
+        // BUSCAR MENSAGENS (GET)
+        const action = url.searchParams.get('action');
+        if (action === 'get') {
+          const list = await env.CHAT_KV.list();
+          const messages = await Promise.all(
+            list.keys.map(k => env.CHAT_KV.get(k.name))
+          );
+          const parsed = messages.map(m => JSON.parse(m)).sort((a, b) => b.timestamp - a.timestamp);
+          return new Response(JSON.stringify({messages: parsed.slice(0, 50)}), { headers });
+        }
+        
+        return new Response(JSON.stringify({error: 'Invalid request'}), { headers, status: 400 });
+      }
+    }
+  */
+  // 4. Substitua a URL abaixo pela URL do seu Worker (ex: https://seu-worker.seu-usuario.workers.dev)
+  final String _apiUrl = 'SEU_WORKER_CLOUDFLARE_URL'; // 👈 COLOQUE SUA URL AQUI!
+  // ============================================
   final String _encryptionKey = 'chave_secreta_32_caracteres!!';
   Timer? _timer;
   Timer? _autoDeleteTimer;

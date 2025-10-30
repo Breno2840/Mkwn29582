@@ -1,32 +1,97 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:crypto/crypto.dart';
+import 'package:encrypt/encrypt.dart' as encrypt; // Usamos um alias para evitar conflitos
 
-void main() {
-  runApp(const MyApp());
+// --- MODELOS DE DADOS ---
+
+// Representa uma única mensagem no chat
+class Message {
+  final String sender;
+  final String encryptedContent; // Armazenamos o conteúdo criptografado
+  final DateTime timestamp;
+
+  Message({
+    required this.sender,
+    required this.encryptedContent,
+    required this.timestamp,
+  });
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+// --- SERVIÇO DE CRIPTOGRAFIA ---
+
+// Classe responsável por criptografar e descriptografar as mensagens.
+// Em um app real, a chave seria gerenciada de forma muito mais segura.
+class EncryptionService {
+  // ATENÇÃO: A chave e o IV (Vetor de Inicialização) nunca devem ser fixos no código em um app de produção.
+  // Eles devem ser gerados de forma segura, derivados de uma senha do usuário ou negociados com um servidor.
+  // Para este exemplo local, estamos usando valores fixos.
+  static final _key = encrypt.Key.fromUtf8('my32lengthsupersecretnooneknows!'); // Chave de 32 bytes para AES-256
+  static final _iv = encrypt.IV.fromLength(16); // IV de 16 bytes para AES
+  
+  static final _encrypter = encrypt.Encrypter(encrypt.AES(_key, mode: encrypt.AESMode.cbc));
+
+  // Criptografa um texto plano
+  static String encryptText(String plainText) {
+    final encrypted = _encrypter.encrypt(plainText, iv: _iv);
+    return encrypted.base64; // Retornamos a string em base64 para facilitar o armazenamento
+  }
+
+  // Descriptografa um texto em base64
+  static String decryptText(String encryptedBase64) {
+    try {
+      final decrypted = _encrypter.decrypt(encrypt.Encrypted.fromBase64(encryptedBase64), iv: _iv);
+      return decrypted;
+    } catch (e) {
+      // Se a descriptografia falhar (ex: chave errada, dados corrompidos), retorna um aviso.
+      return "Falha ao descriptografar a mensagem.";
+    }
+  }
+}
+
+
+// --- PONTO DE ENTRADA DA APLICAÇÃO ---
+
+void main() {
+  runApp(const ChatApp());
+}
+
+class ChatApp extends StatelessWidget {
+  const ChatApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       title: 'Chat Criptografado',
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF0D0D0D),
+      theme: ThemeData(
+        primarySwatch: Colors.deepPurple,
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF121212),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
+          backgroundColor: Color(0xFF1F1F1F),
           elevation: 0,
         ),
+        cardColor: const Color(0xFF1E1E1E),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: const Color(0xFF2A2A2A),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+        ),
       ),
-      home: const SplashScreen(),
+      home: const SplashScreen(), // A aplicação começa na Splash Screen
+      debugShowCheckedModeBanner: false,
     );
   }
 }
 
-// ---------------- SPLASH ----------------
+
+// --- TELAS (SCREENS) ---
+
+// 1. Tela de Splash
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -34,62 +99,127 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _fade;
-
+class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _controller =
-        AnimationController(vsync: this, duration: const Duration(seconds: 2));
-    _fade = Tween<double>(begin: 0, end: 1).animate(_controller);
-    _controller.forward();
-
-    Future.delayed(const Duration(seconds: 3), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const ChatScreen()),
-      );
+    // Navega para a tela de login após 3 segundos
+    Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      }
     });
   }
 
   @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.security, size: 100, color: Colors.deepPurpleAccent),
+            const SizedBox(height: 20),
+            const Text(
+              'Chat Seguro',
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+            const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40.0),
+              child: Text(
+                'Suas conversas protegidas localmente.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, color: Colors.grey[400]),
+              ),
+            ),
+            const SizedBox(height: 40),
+            const CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurpleAccent),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// 2. Tela de Login
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final _nameController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+
+  void _login() {
+    if (_formKey.currentState!.validate()) {
+      final username = _nameController.text.trim();
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => ChatScreen(username: username),
+        ),
+      );
+    }
+  }
+
+  @override
   void dispose() {
-    _controller.dispose();
+    _nameController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF0F2027), Color(0xFF203A43), Color(0xFF2C5364)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(
-          child: FadeTransition(
-            opacity: _fade,
+    return Scaffold(
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Form(
+            key: _formKey,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Icon(Icons.lock_outline, size: 100, color: Colors.white),
-                SizedBox(height: 20),
-                Text(
-                  "Chat Seguro",
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 1.5,
+              children: [
+                const Icon(Icons.person_pin, size: 80, color: Colors.deepPurpleAccent),
+                const SizedBox(height: 20),
+                const Text(
+                  'Quem é você?',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 30),
+                TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Seu nome de usuário',
+                    prefixIcon: Icon(Icons.person),
                   ),
-                )
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Por favor, insira um nome.';
+                    }
+                    return null;
+                  },
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) => _login(),
+                ),
+                const SizedBox(height: 30),
+                ElevatedButton.icon(
+                  onPressed: _login,
+                  icon: const Icon(Icons.arrow_forward),
+                  label: const Text('Entrar no Chat'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurpleAccent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                    textStyle: const TextStyle(fontSize: 16),
+                  ),
+                ),
               ],
             ),
           ),
@@ -99,170 +229,139 @@ class _SplashScreenState extends State<SplashScreen>
   }
 }
 
-// ---------------- CHAT ----------------
+
+// 3. Tela de Bate-papo
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  final String username;
+  const ChatScreen({super.key, required this.username});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final TextEditingController _controller = TextEditingController();
-  final List<_Message> _messages = [];
+  final _messageController = TextEditingController();
+  final _scrollController = ScrollController();
+  final List<Message> _messages = [];
 
-  @override
-  void initState() {
-    super.initState();
-    _loadFakeMessages();
-  }
+  void _sendMessage() {
+    final text = _messageController.text.trim();
+    if (text.isNotEmpty) {
+      // 1. Criptografa o texto antes de criar o objeto Message
+      final encryptedText = EncryptionService.encryptText(text);
 
-  void _loadFakeMessages() {
-    final fake = [
-      "Oi, tudo bem?",
-      "Esse chat é criptografado?",
-      "Sim! Toda mensagem é protegida localmente.",
-      "Legal! E como funciona?",
-      "Usamos SHA256 por enquanto, mas podemos evoluir para AES.",
-    ];
-    for (var text in fake) {
-      _messages.add(_Message(
-        original: text,
-        encrypted: _encryptMessage(text),
-      ));
+      setState(() {
+        _messages.add(Message(
+          sender: widget.username,
+          encryptedContent: encryptedText,
+          timestamp: DateTime.now(),
+        ));
+      });
+      _messageController.clear();
+
+      // Anima a lista para a última mensagem
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if(_scrollController.hasClients){
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      });
     }
   }
 
-  String _encryptMessage(String text) {
-    final bytes = utf8.encode(text);
-    return sha256.convert(bytes).toString();
-  }
-
-  void _sendMessage() {
-    if (_controller.text.trim().isEmpty) return;
-    final encrypted = _encryptMessage(_controller.text.trim());
-    setState(() {
-      _messages.add(_Message(
-        original: _controller.text.trim(),
-        encrypted: encrypted,
-      ));
-    });
-    _controller.clear();
+  @override
+  void dispose() {
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF232526), Color(0xFF414345)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Chat como ${widget.username}'),
+        centerTitle: true,
       ),
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(title: const Text("Bate-papo")),
-        body: Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.all(8),
-                itemCount: _messages.length,
-                itemBuilder: (context, index) {
-                  final msg = _messages[index];
-                  final isUser = index >= 5; // mensagens após as 5 primeiras
-                  return Align(
-                    alignment: isUser
-                        ? Alignment.centerRight
-                        : Alignment.centerLeft,
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 6),
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: isUser
-                              ? [Color(0xFF56CCF2), Color(0xFF2F80ED)]
-                              : [Color(0xFF757F9A), Color(0xFFD7DDE8)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(msg.original,
-                              style: const TextStyle(
-                                  fontSize: 16, color: Colors.white)),
-                          Text(
-                            "🔒 ${msg.encrypted.substring(0, 12)}...",
-                            style: const TextStyle(
-                                fontSize: 10, color: Colors.white70),
-                          ),
-                        ],
-                      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.all(16.0),
+              itemCount: _messages.length,
+              itemBuilder: (context, index) {
+                final message = _messages[index];
+                final isMe = message.sender == widget.username;
+                
+                // 2. Descriptografa o conteúdo para exibição
+                final decryptedContent = EncryptionService.decryptText(message.encryptedContent);
+
+                return Align(
+                  alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 5.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
+                    decoration: BoxDecoration(
+                      color: isMe ? Colors.deepPurple : const Color(0xFF3A3A3A),
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                  );
-                },
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              decoration: const BoxDecoration(
-                color: Color(0xFF1C1C1C),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black54,
-                    blurRadius: 6,
-                    offset: Offset(0, -2),
-                  )
-                ],
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                        hintText: "Digite sua mensagem...",
-                        hintStyle: const TextStyle(color: Colors.white54),
-                        filled: true,
-                        fillColor: const Color(0xFF2A2A2A),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
-                          borderSide: BorderSide.none,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (!isMe)
+                          Text(
+                            message.sender,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.deepPurpleAccent,
+                              fontSize: 12,
+                            ),
+                          ),
+                        if (!isMe) const SizedBox(height: 4),
+                        Text(
+                          decryptedContent,
+                          style: const TextStyle(color: Colors.white, fontSize: 16),
                         ),
-                      ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  CircleAvatar(
-                    backgroundColor: Colors.blueAccent,
-                    child: IconButton(
-                      icon: const Icon(Icons.send, color: Colors.white),
-                      onPressed: _sendMessage,
-                    ),
-                  )
-                ],
-              ),
-            )
-          ],
-        ),
+                );
+              },
+            ),
+          ),
+          _buildMessageComposer(),
+        ],
       ),
     );
   }
-}
 
-class _Message {
-  final String original;
-  final String encrypted;
-  _Message({required this.original, required this.encrypted});
+  Widget _buildMessageComposer() {
+    return Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _messageController,
+              decoration: const InputDecoration(
+                hintText: 'Digite sua mensagem...',
+              ),
+              textCapitalization: TextCapitalization.sentences,
+              onSubmitted: (_) => _sendMessage(),
+            ),
+          ),
+          const SizedBox(width: 10),
+          IconButton(
+            icon: const Icon(Icons.send, size: 28),
+            onPressed: _sendMessage,
+            color: Colors.deepPurpleAccent,
+          ),
+        ],
+      ),
+    );
+  }
 }

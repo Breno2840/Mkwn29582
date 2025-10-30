@@ -1,28 +1,57 @@
 name: app
 description: A new Flutter project.
+
+# A linha a seguir impede que o pacote seja publicado acidentalmente em pub.dev.
 publish_to: 'none'
 
+# A versão do aplicativo. O formato é version+buildNumber.
+# A versão é uma string de três números separados por pontos, como 1.2.43
+# seguido por um número de build opcional separado por um +.
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.0.0
+  sdk: '>=3.0.0 <4.0.0' # Recomendo usar um range para maior compatibilidade
 
+# Dependências que seu aplicativo precisa para rodar.
 dependencies:
   flutter:
     sdk: flutter
-  http: ^1.1.0
+
+  # Para fazer requisições HTTP (não usado no exemplo local, mas mantido do seu pedido original).
+  http: ^1.2.1 # Utilizando uma versão mais recente e estável
+
+  # Para funções de criptografia como hash (não usado diretamente no código, mas pode ser útil).
   crypto: ^3.0.3
 
+  # Essencial para a criptografia e descriptografia AES que implementamos.
+  encrypt: ^5.0.3
+
+  # Ícones no estilo Cupertino (geralmente uma boa prática incluir).
+  cupertino_icons: ^1.0.6
+
+# Dependências usadas apenas durante o desenvolvimento (testes, linting, etc.).
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+  # Ferramenta de análise estática para ajudar a encontrar erros e seguir boas práticas.
   flutter_lints: ^4.0.0
 
+# A seção a seguir é específica para o Flutter.
 flutter:
+
+  # A linha a seguir garante que a fonte e as imagens do Material Design estejam
+  # incluídas no seu aplicativo.
   uses-material-design: true
+
+  # Para adicionar assets (recursos como imagens) ao seu aplicativo, descomente esta seção.
+  # Exemplo:
   # assets:
-  #  - images/a_dot_burr.jpeg
-  #  - images/a_dot_ham.jpeg
+  #   - images/a_dot_burr.jpeg
+  #   - images/a_dot_ham.jpeg
+
+  # Para adicionar fontes personalizadas ao seu aplicativo, descomente esta seção.
+  # Exemplo:
   # fonts:
   #   - family: Schyler
   #     fonts:

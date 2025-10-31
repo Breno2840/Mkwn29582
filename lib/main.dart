@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:crypto/crypto.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 
+// Importa nosso novo helper do banco de dados
+import 'database_helper.dart';
+
 // --- MODELOS DE DADOS ---
 
-// Representa um único contato na lista
 class Contact {
   final String name;
-  final String avatarUrl; // URL para uma imagem de avatar
+  final String avatarUrl;
   final String lastMessage;
   final String time;
 
@@ -21,7 +23,6 @@ class Contact {
   });
 }
 
-// Representa uma única mensagem no chat
 class Message {
   final String sender;
   final String encryptedContent;
@@ -34,7 +35,7 @@ class Message {
   });
 }
 
-// --- SERVIÇO DE CRIPTOGRAFIA (sem alterações) ---
+// --- SERVIÇO DE CRIPTOGRAFIA ---
 class EncryptionService {
   static final _key = encrypt.Key.fromUtf8('my32lengthsupersecretnooneknows!');
   static final _iv = encrypt.IV.fromLength(16);
@@ -55,8 +56,10 @@ class EncryptionService {
   }
 }
 
-// --- PONTO DE ENTRADA DA APLICAÇÃO (sem alterações) ---
+// --- PONTO DE ENTRADA DA APLICAÇÃO ---
 void main() {
+  // Garante que os bindings do Flutter sejam inicializados antes de qualquer outra coisa
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const ChatApp());
 }
 
@@ -93,7 +96,7 @@ class ChatApp extends StatelessWidget {
 
 // --- TELAS (SCREENS) ---
 
-// 1. Tela de Splash (sem alterações)
+// 1. Tela de Splash
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -123,23 +126,14 @@ class _SplashScreenState extends State<SplashScreen> {
           children: [
             const Icon(Icons.security, size: 100, color: Colors.deepPurpleAccent),
             const SizedBox(height: 20),
-            const Text(
-              'Chat Seguro',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
-            ),
+            const Text('Chat Seguro', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
             const SizedBox(height: 10),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40.0),
-              child: Text(
-                'Suas conversas protegidas localmente.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey[400]),
-              ),
+              child: Text('Suas conversas protegidas localmente.', textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: Colors.grey[400])),
             ),
             const SizedBox(height: 40),
-            const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurpleAccent),
-            ),
+            const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurpleAccent)),
           ],
         ),
       ),
@@ -147,7 +141,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
-// 2. Tela de Login (Navegação alterada)
+// 2. Tela de Login
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -162,11 +156,8 @@ class _LoginScreenState extends State<LoginScreen> {
   void _login() {
     if (_formKey.currentState!.validate()) {
       final username = _nameController.text.trim();
-      // ALTERAÇÃO: Navega para a tela de contatos, passando o nome do usuário
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => ContactListScreen(username: username),
-        ),
+        MaterialPageRoute(builder: (_) => ContactListScreen(username: username)),
       );
     }
   }
@@ -190,23 +181,12 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 const Icon(Icons.person_pin, size: 80, color: Colors.deepPurpleAccent),
                 const SizedBox(height: 20),
-                const Text(
-                  'Quem é você?',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
+                const Text('Quem é você?', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 30),
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Seu nome de usuário',
-                    prefixIcon: Icon(Icons.person),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Por favor, insira um nome.';
-                    }
-                    return null;
-                  },
+                  decoration: const InputDecoration(labelText: 'Seu nome de usuário', prefixIcon: Icon(Icons.person)),
+                  validator: (value) => (value == null || value.trim().isEmpty) ? 'Por favor, insira um nome.' : null,
                   textInputAction: TextInputAction.done,
                   onFieldSubmitted: (_) => _login(),
                 ),
@@ -231,7 +211,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-// 3. TELA DE LISTA DE CONTATOS (NOVA)
+// 3. Tela de Lista de Contatos
 class ContactListScreen extends StatefulWidget {
   final String username;
   const ContactListScreen({super.key, required this.username});
@@ -241,7 +221,6 @@ class ContactListScreen extends StatefulWidget {
 }
 
 class _ContactListScreenState extends State<ContactListScreen> {
-  // Dados fictícios para a lista de contatos
   final List<Contact> _contacts = [
     Contact(name: 'Alice', avatarUrl: 'https://i.pravatar.cc/150?img=1', lastMessage: 'Olá! Tudo bem?', time: '10:40'),
     Contact(name: 'Bob', avatarUrl: 'https://i.pravatar.cc/150?img=2', lastMessage: 'Nos vemos mais tarde.', time: '10:35'),
@@ -253,10 +232,7 @@ class _ContactListScreenState extends State<ContactListScreen> {
   void _navigateToChat(Contact contact) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => ChatScreen(
-          username: widget.username,
-          contactName: contact.name, // Passa o nome do contato para a tela de chat
-        ),
+        builder: (_) => ChatScreen(username: widget.username, contactName: contact.name),
       ),
     );
   }
@@ -267,18 +243,8 @@ class _ContactListScreenState extends State<ContactListScreen> {
       appBar: AppBar(
         title: const Text('Conversas'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              // TODO: Implementar funcionalidade de busca
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.more_vert),
-            onPressed: () {
-              // TODO: Implementar menu de opções
-            },
-          ),
+          IconButton(icon: const Icon(Icons.search), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
         ],
       ),
       body: ListView.builder(
@@ -286,26 +252,16 @@ class _ContactListScreenState extends State<ContactListScreen> {
         itemBuilder: (context, index) {
           final contact = _contacts[index];
           return ListTile(
-            leading: CircleAvatar(
-              backgroundImage: NetworkImage(contact.avatarUrl),
-              radius: 28,
-            ),
+            leading: CircleAvatar(backgroundImage: NetworkImage(contact.avatarUrl), radius: 28),
             title: Text(contact.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text(
-              contact.lastMessage,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: Colors.grey[400]),
-            ),
+            subtitle: Text(contact.lastMessage, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.grey[400])),
             trailing: Text(contact.time, style: TextStyle(color: Colors.grey[500], fontSize: 12)),
             onTap: () => _navigateToChat(contact),
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: Implementar ação de novo chat
-        },
+        onPressed: () {},
         backgroundColor: Colors.deepPurpleAccent,
         child: const Icon(Icons.chat_bubble_outline),
       ),
@@ -313,16 +269,12 @@ class _ContactListScreenState extends State<ContactListScreen> {
   }
 }
 
-// 4. Tela de Bate-papo (Atualizada)
+// 4. Tela de Bate-papo (Atualizada com Persistência)
 class ChatScreen extends StatefulWidget {
-  final String username; // Nome do usuário logado
-  final String contactName; // Nome do contato com quem está conversando
+  final String username;
+  final String contactName;
 
-  const ChatScreen({
-    super.key,
-    required this.username,
-    required this.contactName,
-  });
+  const ChatScreen({super.key, required this.username, required this.contactName});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -332,31 +284,65 @@ class _ChatScreenState extends State<ChatScreen> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   final List<Message> _messages = [];
+  late final String _chatId;
 
-  void _sendMessage() {
+  @override
+  void initState() {
+    super.initState();
+    // Cria um ID de chat único e consistente, ordenando os nomes
+    final names = [widget.username, widget.contactName];
+    names.sort();
+    _chatId = names.join('-');
+
+    _loadMessages();
+  }
+
+  void _loadMessages() async {
+    final loadedMessages = await DatabaseHelper.instance.getMessages(_chatId);
+    setState(() {
+      _messages.addAll(loadedMessages);
+    });
+    // Rola para o final da lista assim que as mensagens forem carregadas
+    _scrollToBottom(instant: true);
+  }
+
+  void _sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isNotEmpty) {
       final encryptedText = EncryptionService.encryptText(text);
+      
+      final newMessage = Message(
+        sender: widget.username,
+        encryptedContent: encryptedText,
+        timestamp: DateTime.now(),
+      );
+
+      // 1. Salva a mensagem no banco de dados
+      await DatabaseHelper.instance.insertMessage(newMessage, _chatId);
+
+      // 2. Adiciona à lista na UI
       setState(() {
-        _messages.add(Message(
-          sender: widget.username, // O remetente é sempre o usuário logado
-          encryptedContent: encryptedText,
-          timestamp: DateTime.now(),
-        ));
+        _messages.add(newMessage);
       });
+
       _messageController.clear();
       _scrollToBottom();
     }
   }
 
-  void _scrollToBottom() {
-    Future.delayed(const Duration(milliseconds: 100), () {
+  void _scrollToBottom({bool instant = false}) {
+    // Adiciona um pequeno delay para garantir que a lista foi construída antes de rolar
+    Future.delayed(const Duration(milliseconds: 50), () {
       if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
+        if (instant) {
+          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+        } else {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
       }
     });
   }
@@ -372,7 +358,6 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // ATUALIZAÇÃO: O título agora é o nome do contato
         title: Text(widget.contactName),
         centerTitle: true,
       ),
@@ -388,8 +373,6 @@ class _ChatScreenState extends State<ChatScreen> {
                 final isMe = message.sender == widget.username;
                 final decryptedContent = EncryptionService.decryptText(message.encryptedContent);
 
-                // Em um app real, você teria mensagens do outro contato também.
-                // Aqui, todas as mensagens são do usuário logado.
                 return Align(
                   alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
                   child: Container(
@@ -399,10 +382,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       color: isMe ? Colors.deepPurple : const Color(0xFF3A3A3A),
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: Text(
-                      decryptedContent,
-                      style: const TextStyle(color: Colors.white, fontSize: 16),
-                    ),
+                    child: Text(decryptedContent, style: const TextStyle(color: Colors.white, fontSize: 16)),
                   ),
                 );
               },
@@ -422,9 +402,7 @@ class _ChatScreenState extends State<ChatScreen> {
           Expanded(
             child: TextField(
               controller: _messageController,
-              decoration: const InputDecoration(
-                hintText: 'Digite sua mensagem...',
-              ),
+              decoration: const InputDecoration(hintText: 'Digite sua mensagem...'),
               textCapitalization: TextCapitalization.sentences,
               onSubmitted: (_) => _sendMessage(),
             ),

@@ -2,14 +2,29 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:crypto/crypto.dart';
-import 'package:encrypt/encrypt.dart' as encrypt; // Usamos um alias para evitar conflitos
+import 'package:encrypt/encrypt.dart' as encrypt;
 
 // --- MODELOS DE DADOS ---
+
+// Representa um único contato na lista
+class Contact {
+  final String name;
+  final String avatarUrl; // URL para uma imagem de avatar
+  final String lastMessage;
+  final String time;
+
+  Contact({
+    required this.name,
+    required this.avatarUrl,
+    required this.lastMessage,
+    required this.time,
+  });
+}
 
 // Representa uma única mensagem no chat
 class Message {
   final String sender;
-  final String encryptedContent; // Armazenamos o conteúdo criptografado
+  final String encryptedContent;
   final DateTime timestamp;
 
   Message({
@@ -19,40 +34,28 @@ class Message {
   });
 }
 
-// --- SERVIÇO DE CRIPTOGRAFIA ---
-
-// Classe responsável por criptografar e descriptografar as mensagens.
-// Em um app real, a chave seria gerenciada de forma muito mais segura.
+// --- SERVIÇO DE CRIPTOGRAFIA (sem alterações) ---
 class EncryptionService {
-  // ATENÇÃO: A chave e o IV (Vetor de Inicialização) nunca devem ser fixos no código em um app de produção.
-  // Eles devem ser gerados de forma segura, derivados de uma senha do usuário ou negociados com um servidor.
-  // Para este exemplo local, estamos usando valores fixos.
-  static final _key = encrypt.Key.fromUtf8('my32lengthsupersecretnooneknows!'); // Chave de 32 bytes para AES-256
-  static final _iv = encrypt.IV.fromLength(16); // IV de 16 bytes para AES
-  
+  static final _key = encrypt.Key.fromUtf8('my32lengthsupersecretnooneknows!');
+  static final _iv = encrypt.IV.fromLength(16);
   static final _encrypter = encrypt.Encrypter(encrypt.AES(_key, mode: encrypt.AESMode.cbc));
 
-  // Criptografa um texto plano
   static String encryptText(String plainText) {
     final encrypted = _encrypter.encrypt(plainText, iv: _iv);
-    return encrypted.base64; // Retornamos a string em base64 para facilitar o armazenamento
+    return encrypted.base64;
   }
 
-  // Descriptografa um texto em base64
   static String decryptText(String encryptedBase64) {
     try {
       final decrypted = _encrypter.decrypt(encrypt.Encrypted.fromBase64(encryptedBase64), iv: _iv);
       return decrypted;
     } catch (e) {
-      // Se a descriptografia falhar (ex: chave errada, dados corrompidos), retorna um aviso.
-      return "Falha ao descriptografar a mensagem.";
+      return "Falha ao descriptografar.";
     }
   }
 }
 
-
-// --- PONTO DE ENTRADA DA APLICAÇÃO ---
-
+// --- PONTO DE ENTRADA DA APLICAÇÃO (sem alterações) ---
 void main() {
   runApp(const ChatApp());
 }
@@ -82,16 +85,15 @@ class ChatApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const SplashScreen(), // A aplicação começa na Splash Screen
+      home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
     );
   }
 }
 
-
 // --- TELAS (SCREENS) ---
 
-// 1. Tela de Splash
+// 1. Tela de Splash (sem alterações)
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -103,7 +105,6 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Navega para a tela de login após 3 segundos
     Timer(const Duration(seconds: 3), () {
       if (mounted) {
         Navigator.of(context).pushReplacement(
@@ -146,12 +147,12 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
-// 2. Tela de Login
+// 2. Tela de Login (Navegação alterada)
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-State<LoginScreen> createState() => _LoginScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
@@ -161,9 +162,10 @@ class _LoginScreenState extends State<LoginScreen> {
   void _login() {
     if (_formKey.currentState!.validate()) {
       final username = _nameController.text.trim();
+      // ALTERAÇÃO: Navega para a tela de contatos, passando o nome do usuário
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => ChatScreen(username: username),
+          builder: (_) => ContactListScreen(username: username),
         ),
       );
     }
@@ -212,7 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ElevatedButton.icon(
                   onPressed: _login,
                   icon: const Icon(Icons.arrow_forward),
-                  label: const Text('Entrar no Chat'),
+                  label: const Text('Entrar'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurpleAccent,
                     foregroundColor: Colors.white,
@@ -229,11 +231,98 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-
-// 3. Tela de Bate-papo
-class ChatScreen extends StatefulWidget {
+// 3. TELA DE LISTA DE CONTATOS (NOVA)
+class ContactListScreen extends StatefulWidget {
   final String username;
-  const ChatScreen({super.key, required this.username});
+  const ContactListScreen({super.key, required this.username});
+
+  @override
+  State<ContactListScreen> createState() => _ContactListScreenState();
+}
+
+class _ContactListScreenState extends State<ContactListScreen> {
+  // Dados fictícios para a lista de contatos
+  final List<Contact> _contacts = [
+    Contact(name: 'Alice', avatarUrl: 'https://i.pravatar.cc/150?img=1', lastMessage: 'Olá! Tudo bem?', time: '10:40'),
+    Contact(name: 'Bob', avatarUrl: 'https://i.pravatar.cc/150?img=2', lastMessage: 'Nos vemos mais tarde.', time: '10:35'),
+    Contact(name: 'Carol', avatarUrl: 'https://i.pravatar.cc/150?img=3', lastMessage: 'Reunião confirmada.', time: '09:12'),
+    Contact(name: 'David', avatarUrl: 'https://i.pravatar.cc/150?img=4', lastMessage: 'Me envie o relatório.', time: 'Ontem'),
+    Contact(name: 'Eve', avatarUrl: 'https://i.pravatar.cc/150?img=5', lastMessage: 'Ótima ideia!', time: 'Ontem'),
+  ];
+
+  void _navigateToChat(Contact contact) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ChatScreen(
+          username: widget.username,
+          contactName: contact.name, // Passa o nome do contato para a tela de chat
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Conversas'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              // TODO: Implementar funcionalidade de busca
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.more_vert),
+            onPressed: () {
+              // TODO: Implementar menu de opções
+            },
+          ),
+        ],
+      ),
+      body: ListView.builder(
+        itemCount: _contacts.length,
+        itemBuilder: (context, index) {
+          final contact = _contacts[index];
+          return ListTile(
+            leading: CircleAvatar(
+              backgroundImage: NetworkImage(contact.avatarUrl),
+              radius: 28,
+            ),
+            title: Text(contact.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: Text(
+              contact.lastMessage,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: Colors.grey[400]),
+            ),
+            trailing: Text(contact.time, style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+            onTap: () => _navigateToChat(contact),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // TODO: Implementar ação de novo chat
+        },
+        backgroundColor: Colors.deepPurpleAccent,
+        child: const Icon(Icons.chat_bubble_outline),
+      ),
+    );
+  }
+}
+
+// 4. Tela de Bate-papo (Atualizada)
+class ChatScreen extends StatefulWidget {
+  final String username; // Nome do usuário logado
+  final String contactName; // Nome do contato com quem está conversando
+
+  const ChatScreen({
+    super.key,
+    required this.username,
+    required this.contactName,
+  });
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -247,29 +336,29 @@ class _ChatScreenState extends State<ChatScreen> {
   void _sendMessage() {
     final text = _messageController.text.trim();
     if (text.isNotEmpty) {
-      // 1. Criptografa o texto antes de criar o objeto Message
       final encryptedText = EncryptionService.encryptText(text);
-
       setState(() {
         _messages.add(Message(
-          sender: widget.username,
+          sender: widget.username, // O remetente é sempre o usuário logado
           encryptedContent: encryptedText,
           timestamp: DateTime.now(),
         ));
       });
       _messageController.clear();
-
-      // Anima a lista para a última mensagem
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if(_scrollController.hasClients){
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
-        }
-      });
+      _scrollToBottom();
     }
+  }
+
+  void _scrollToBottom() {
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   @override
@@ -280,10 +369,11 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   @override
-Widget build(BuildContext context) {
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Chat como ${widget.username}'),
+        // ATUALIZAÇÃO: O título agora é o nome do contato
+        title: Text(widget.contactName),
         centerTitle: true,
       ),
       body: Column(
@@ -296,10 +386,10 @@ Widget build(BuildContext context) {
               itemBuilder: (context, index) {
                 final message = _messages[index];
                 final isMe = message.sender == widget.username;
-                
-                // 2. Descriptografa o conteúdo para exibição
                 final decryptedContent = EncryptionService.decryptText(message.encryptedContent);
 
+                // Em um app real, você teria mensagens do outro contato também.
+                // Aqui, todas as mensagens são do usuário logado.
                 return Align(
                   alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
                   child: Container(
@@ -309,24 +399,9 @@ Widget build(BuildContext context) {
                       color: isMe ? Colors.deepPurple : const Color(0xFF3A3A3A),
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (!isMe)
-                          Text(
-                            message.sender,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.deepPurpleAccent,
-                              fontSize: 12,
-                            ),
-                          ),
-                        if (!isMe) const SizedBox(height: 4),
-                        Text(
-                          decryptedContent,
-                          style: const TextStyle(color: Colors.white, fontSize: 16),
-                        ),
-                      ],
+                    child: Text(
+                      decryptedContent,
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
                     ),
                   ),
                 );

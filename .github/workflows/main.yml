@@ -1,9 +1,7 @@
 name: Build Debug APK and Publish to Release
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -55,8 +53,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: "📦 Build automático (Debug)"
-          body: "🚀 Nova versão de teste gerada automaticamente a partir da branch **main**."
+          name: "📦 Build manual (Debug)"
+          body: "🚀 Nova versão de teste gerada manualmente."
           files: build/app/outputs/flutter-apk/app-debug.apk
           make_latest: true
         env:

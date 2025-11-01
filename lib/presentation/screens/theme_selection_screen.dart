@@ -19,15 +19,15 @@ class ThemeSelectionScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: GridView.builder(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3, // Mantém 3 colunas
+            crossAxisCount: 3,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 0.8, // Ajusta a proporção para caber o nome
+            childAspectRatio: 0.8,
           ),
           itemCount: AppThemes.allThemes.length,
           itemBuilder: (context, index) {
             final theme = AppThemes.allThemes[index];
-            final themeName = _getThemeName(theme); // Pega o nome do tema
+            final themeName = _getThemeName(theme);
 
             return GestureDetector(
               onTap: () {
@@ -35,24 +35,23 @@ class ThemeSelectionScreen extends StatelessWidget {
               },
               child: Column(
                 children: [
-                  // Círculo de pré-visualização da cor
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
+                        // O gradiente agora usa as cores primária e secundária corretas de cada tema
                         gradient: LinearGradient(
                           colors: [theme.primaryColor, theme.colorScheme.secondary],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                         border: themeProvider.getTheme == theme
-                            ? Border.all(color: Colors.grey.shade400, width: 3)
+                            ? Border.all(color: theme.colorScheme.secondary, width: 3)
                             : null,
                       ),
                     ),
                   ),
                   const SizedBox(height: 8),
-                  // Nome do tema
                   Text(
                     themeName,
                     style: const TextStyle(fontWeight: FontWeight.bold),
@@ -67,11 +66,18 @@ class ThemeSelectionScreen extends StatelessWidget {
     );
   }
 
-  // Função auxiliar para dar nomes aos temas
+  // Função auxiliar atualizada com todos os nomes
   String _getThemeName(ThemeData theme) {
     if (theme == AppThemes.darkTheme) return 'Padrão Escuro';
     if (theme == AppThemes.lightTheme) return 'Claro';
     if (theme == AppThemes.forestTheme) return 'Floresta';
+    if (theme == AppThemes.oceanTheme) return 'Oceano';
+    if (theme == AppThemes.sunsetTheme) return 'Crepúsculo';
+    if (theme == AppThemes.roseTheme) return 'Rosa';
+    if (theme == AppThemes.midnightTheme) return 'Meia-noite';
+    if (theme == AppThemes.coffeeTheme) return 'Café';
+    if (theme == AppThemes.grapeTheme) return 'Uva';
+    if (theme == AppThemes.mintTheme) return 'Menta';
     return 'Tema ${AppThemes.allThemes.indexOf(theme) + 1}';
   }
 }

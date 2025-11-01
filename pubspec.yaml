@@ -10,21 +10,22 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # Dependências originais e novas
   http: ^1.2.1
   crypto: ^3.0.3
   encrypt: ^5.0.3
   cupertino_icons: ^1.0.6
-  
-  # Dependências para o banco de dados local
   sqflite: ^2.3.3
   path: ^1.9.0
-
-  # Dependência para salvar o nome de usuário
   shared_preferences: ^2.2.3
-
-  # >>> DEPENDÊNCIA FALTANDO QUE FOI ADICIONADA AGORA <<<
   intl: ^0.19.0
+
+  # >>> NOVAS DEPENDÊNCIAS <<<
+  # Para gerenciamento de estado (temas)
+  provider: ^6.1.2
+  # Para extrair cores de imagens
+  palette_generator: ^0.3.3+3
+  # Para selecionar imagens da galeria
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:

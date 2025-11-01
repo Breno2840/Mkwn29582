@@ -1,13 +1,19 @@
 // lib/main.dart
 
 import 'package:flutter/material.dart';
-import 'package:app/presentation/screens/splash_screen.dart'; // Import da nova estrutura
+import 'package:provider/provider.dart';
+import 'package:app/core/services/theme_provider.dart';
+import 'package:app/presentation/screens/splash_screen.dart';
 
 void main() {
-  // Garante que os bindings do Flutter sejam inicializados antes de qualquer coisa.
-  // Essencial para o sqflite e shared_preferences funcionarem corretamente.
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const ChatApp());
+  runApp(
+    // Envolvemos o app com o ChangeNotifierProvider
+    ChangeNotifierProvider(
+      create: (_) => ThemeProvider(AppThemes.darkTheme), // Tema inicial
+      child: const ChatApp(),
+    ),
+  );
 }
 
 class ChatApp extends StatelessWidget {
@@ -15,28 +21,16 @@ class ChatApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Chat Criptografado',
-      theme: ThemeData(
-        primarySwatch: Colors.deepPurple,
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF121212),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF1F1F1F),
-          elevation: 0,
-        ),
-        cardColor: const Color(0xFF1E1E1E),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: const Color(0xFF2A2A2A),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-        ),
-      ),
-      home: const SplashScreen(),
-      debugShowCheckedModeBanner: false,
+    // O Consumer ouve as mudanças no ThemeProvider
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          title: 'Chat Criptografado',
+          theme: themeProvider.getTheme, // Usa o tema do provider
+          home: const SplashScreen(),
+          debugShowCheckedModeBanner: false,
+        );
+      },
     );
   }
 }

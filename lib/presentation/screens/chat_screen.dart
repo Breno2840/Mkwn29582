@@ -1,6 +1,7 @@
 // lib/presentation/screens/chat_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart'; // Importe o pacote para formatação de data/hora
 import 'package:app/core/models/contact_model.dart';
 import 'package:app/core/models/message_model.dart';
 import 'package:app/core/services/database_helper.dart';
@@ -77,21 +78,32 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.contact.name),
-        centerTitle: true,
+        // Adicionando o avatar do contato na AppBar para um visual mais rico
+        title: Row(
+          children: [
+            CircleAvatar(
+              backgroundImage: NetworkImage(widget.contact.avatarUrl),
+              radius: 20,
+            ),
+            const SizedBox(width: 12),
+            Text(widget.contact.name),
+          ],
+        ),
       ),
       body: Column(
         children: [
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
               itemCount: _messages.length,
               itemBuilder: (context, index) {
                 final message = _messages[index];
                 final isMe = message.sender == widget.username;
                 final decryptedContent = EncryptionService.decryptText(message.encryptedContent);
-                return _buildMessageBubble(isMe, decryptedContent);
+                
+                // Passamos a mensagem inteira para o widget do balão
+                return _buildMessageBubble(message, isMe, decryptedContent);
               },
             ),
           ),
@@ -101,17 +113,62 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildMessageBubble(bool isMe, String content) {
+  // --- WIDGET DO BALÃO DE MENSAGEM ATUALIZADO ---
+  Widget _buildMessageBubble(Message message, bool isMe, String content) {
+    final alignment = isMe ? Alignment.centerRight : Alignment.centerLeft;
+    final color = isMe ? Colors.deepPurple : const Color(0xFF3A3A3A);
+    
+    // Define bordas diferentes para o usuário e para o contato
+    final borderRadius = isMe
+        ? const BorderRadius.only(
+            topLeft: Radius.circular(18),
+            bottomLeft: Radius.circular(18),
+            topRight: Radius.circular(18),
+            bottomRight: Radius.circular(4), // Canto reto
+          )
+        : const BorderRadius.only(
+            topLeft: Radius.circular(4), // Canto reto
+            bottomLeft: Radius.circular(18),
+            topRight: Radius.circular(18),
+            bottomRight: Radius.circular(18),
+          );
+
     return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      alignment: alignment,
       child: Container(
+        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
         margin: const EdgeInsets.symmetric(vertical: 5.0),
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
         decoration: BoxDecoration(
-          color: isMe ? Colors.deepPurple : const Color(0xFF3A3A3A),
-          borderRadius: BorderRadius.circular(16),
+          color: color,
+          borderRadius: borderRadius,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 3,
+              offset: const Offset(0, 2),
+            )
+          ],
         ),
-        child: Text(content, style: const TextStyle(color: Colors.white, fontSize: 16)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            // Conteúdo da mensagem
+            Text(
+              content,
+              style: const TextStyle(color: Colors.white, fontSize: 16, height: 1.3),
+            ),
+            const SizedBox(height: 5),
+            // Hora da mensagem
+            Text(
+              DateFormat('HH:mm').format(message.timestamp), // Formata a hora (ex: 14:30)
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

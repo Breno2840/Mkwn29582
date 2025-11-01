@@ -20,8 +20,11 @@ dependencies:
   sqflite: ^2.3.3
   path: ^1.9.0
 
-  # >>> ADICIONE ESTA LINHA <<<
+  # Dependência para salvar o nome de usuário
   shared_preferences: ^2.2.3
+
+  # >>> DEPENDÊNCIA FALTANDO QUE FOI ADICIONADA AGORA <<<
+  intl: ^0.19.0
 
 dev_dependencies:
   flutter_test:
